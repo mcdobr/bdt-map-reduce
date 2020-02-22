@@ -1,0 +1,5 @@
+crawler:
+  seeds:
+    - https://www.librariilealexandria.ro/
+  page:
+    limit: 2000

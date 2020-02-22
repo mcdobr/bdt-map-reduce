@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "crawler.page.limit",
+      "type": "java.lang.Long",
+      "description": "Number of downloaded pages after which the crawler should stop"
+    },
+    {
+      "name": "crawler.seeds",
+      "type": "java.lang.String",
+      "description": "List of strings that make up the starting points for the crawl."
+    }
+  ]
+}
