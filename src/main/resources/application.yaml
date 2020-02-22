@@ -1,5 +1,10 @@
+logging:
+  level:
+    root: INFO
 crawler:
-  seeds:
-    - https://www.librariilealexandria.ro/
+  seeds: https://www.librariilealexandria.ro/, https://www.libris.ro/
   page:
     limit: 2000
+  filesystem:
+    target:
+      path: file:///home/mircea/work/crawled-pages
