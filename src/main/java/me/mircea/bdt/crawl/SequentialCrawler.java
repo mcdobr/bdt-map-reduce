@@ -122,9 +122,6 @@ public class SequentialCrawler {
                 resourcePath = resourcePath.resolve("index.html");
             }
         }
-//        if (url.pathSegments().isEmpty()) {
-//            resourcePath = resourcePath.resolve("index.html");
-//        }
 
         Files.createDirectories(resourcePath.getParent());
         Files.writeString(resourcePath, document.toString());
