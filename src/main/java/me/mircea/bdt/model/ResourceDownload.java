@@ -5,8 +5,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import okhttp3.HttpUrl;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.Instant;
 
@@ -16,7 +16,7 @@ import java.time.Instant;
 @EqualsAndHashCode
 @Builder
 public class ResourceDownload {
-    private URI uri;
+    private HttpUrl url;
     private Instant downloadedTimestamp;
     private Path path;
 }
