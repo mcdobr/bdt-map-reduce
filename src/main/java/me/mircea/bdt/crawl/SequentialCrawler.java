@@ -1,5 +1,10 @@
 package me.mircea.bdt.crawl;
 
+import com.google.common.base.Charsets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -12,20 +17,19 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,34 +45,33 @@ public class SequentialCrawler {
     private final OkHttpClient httpClient;
 
     @NonNull
-    private final Path fileSystemTargetPath;
+    private final Path fileSystemDocumentsPath;
+
+    @NonNull
+    private final Path fileSystemBackLinksPath;
+
+    @NonNull
+    private final Path fileSystemReverseLookupPath;
 
     @NonNull
     private final UUID uuid = UUID.randomUUID();
 
     private final long pageLimit;
 
+    private final Map<HttpUrl, List<String>> referrerMap = new HashMap<>();
+
     public void start() {
         log.info("Started crawl job {} with crawl frontier: {}", uuid, crawlFrontier);
 
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        ScheduledFuture<?> scheduledFuture = executorService.scheduleAtFixedRate(
-                this::crawl, 0, 1, TimeUnit.SECONDS);
-
-        try {
-            scheduledFuture.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        crawl();
 
         log.info("Finished crawl job {}", uuid);
     }
 
     private void crawl() {
-        if (!crawlFrontier.isEmpty()) {
+        while (!crawlFrontier.isEmpty() && visited.size() < pageLimit) {
             HttpUrl url = crawlFrontier.remove();
+            visited.add(url);
 
             Request getRequest = new Request.Builder()
                     .url(url.toString())
@@ -76,25 +79,27 @@ public class SequentialCrawler {
 
             try (Response response = httpClient.newCall(getRequest).execute()) {
                 var documentLinksPair = harvestResponse(url, response);
-                visited.add(url);
                 crawlFrontier.addAll(documentLinksPair.getValue());
+                referrerMap.put(url, documentLinksPair.getValue().stream().map(HttpUrl::toString).collect(Collectors.toList()));
 
+                CompletableFuture.runAsync(() -> tryToPersistResponseBody(url, documentLinksPair));
                 CompletableFuture.runAsync(() -> {
-                    try {
-                        persistResponseBody(url, documentLinksPair.getKey());
-                    } catch (IOException e) {
-                        log.warn("Could not persist response file for url {}", url);
-                    }
+                    documentLinksPair.getValue()
+                            .forEach(referred -> tryToCreateBackLinkFiles(url, referred, Hashing.sipHash24()));
                 });
+
+                Thread.sleep(1000);
             } catch (IOException e) {
                 log.warn("Could not download page {}", url.toString(), e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }
 
     private Map.Entry<Document, Set<HttpUrl>> harvestResponse(HttpUrl url, Response response) throws IOException {
         log.info("Parsing response from {}", url);
-        visited.add(url);
+        visited.add(url); // todo: check existence of url hash on file system
 
         ResponseBody responseBody = response.body();
 
@@ -109,12 +114,17 @@ public class SequentialCrawler {
         return new AbstractMap.SimpleEntry<>(htmlDocument, urls);
     }
 
-    private void persistResponseBody(HttpUrl url, Document document) throws IOException {
-        // todo: needs more work for directory and file naming
-        Path hostPath = fileSystemTargetPath.resolve(url.scheme())
-                .resolve(url.host());
+    private void tryToPersistResponseBody(HttpUrl url, Map.Entry<Document, Set<HttpUrl>> documentLinksPair) {
+        try {
+            persistResponseBody(url, documentLinksPair.getKey());
+        } catch (IOException e) {
+            log.warn("Could not persist response file for url {}", url);
+        }
+    }
 
-        Path resourcePath = hostPath;
+    private void persistResponseBody(HttpUrl url, Document document) throws IOException {
+        Path resourcePath = fileSystemDocumentsPath.resolve(url.scheme())
+                .resolve(url.host());
         for (String segment : url.pathSegments()) {
             if (!segment.equals("")) {
                 resourcePath = resourcePath.resolve(segment);
@@ -126,4 +136,44 @@ public class SequentialCrawler {
         Files.createDirectories(resourcePath.getParent());
         Files.writeString(resourcePath, document.toString());
     }
+
+    private void tryToCreateBackLinkFiles(HttpUrl referrer, HttpUrl referred, HashFunction hashFunction) {
+        HashCode referredHash = hashUrl(referred, hashFunction);
+        HashCode referrerHash = hashUrl(referrer, hashFunction);
+
+        String backLinkFileName = String.format("%s_%s.backLink",
+                referredHash.toString(),
+                referrerHash.toString()
+        );
+        String reverseLookupFileName = generateRandomString();
+
+        try {
+            Path backLinkPath = Files.createFile(fileSystemBackLinksPath.resolve(backLinkFileName));
+            log.debug("Created file {}", backLinkPath);
+
+            Path reversePath = Files.createFile(fileSystemReverseLookupPath.resolve(reverseLookupFileName));
+            Files.writeString(reversePath, referredHash.toString() + " " + referred);
+        } catch (FileAlreadyExistsException e) {
+            log.debug("Back link {} already exists", backLinkFileName);
+        } catch (IOException e) {
+            log.warn("Could not create file with name {}", backLinkFileName);
+        }
+    }
+
+    private HashCode hashUrl(HttpUrl url, HashFunction hashFunction) {
+        return hashFunction.newHasher()
+                .putString(url.toString(), Charsets.UTF_8)
+                .hash();
+    }
+
+    private String generateRandomString() {
+        final int bufferSize = 64;
+        final byte[] buffer = new byte[bufferSize];
+        ThreadLocalRandom.current().nextBytes(buffer);
+        return BaseEncoding.base32().omitPadding().encode(buffer);
+    }
 }
+
+// have some reverse mapping files that you can merge later
+// and just use the hashes to put on the files
+

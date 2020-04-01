@@ -4,7 +4,14 @@ logging:
 crawler:
   seeds: https://www.librariilealexandria.ro/, https://www.libris.ro/
   page:
-    limit: 2000
-  filesystem:
-    target:
-      path: file:///home/mircea/work/crawled-pages
+    limit: 600
+  user.agent: Chillbot/1.0
+filesystem:
+  documents:
+    path: file:///C:/Users/mircea.dobreanu/crawler_files/documents
+  back:
+    links:
+      path: file:///C:/Users/mircea.dobreanu/crawler_files/back_links
+  reverse:
+    lookup:
+      path: file:///C:/Users/mircea.dobreanu/crawler_files/reverse_lookup
