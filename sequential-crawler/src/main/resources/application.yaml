@@ -2,16 +2,9 @@ logging:
   level:
     root: INFO
 crawler:
-  seeds: https://www.librariilealexandria.ro/, https://www.libris.ro/
+  seeds: https://www.librariilealexandria.ro/, https://www.libris.ro/, https://carturesti.ro/, https://www.domo.ro/, https://www.bookdepository.com/
   page:
-    limit: 600
+    limit: 2000
   user.agent: Chillbot/1.0
 filesystem:
-  documents:
-    path: file:///C:/Users/mircea.dobreanu/crawler_files/documents
-  back:
-    links:
-      path: file:///C:/Users/mircea.dobreanu/crawler_files/back_links
-  reverse:
-    lookup:
-      path: file:///C:/Users/mircea.dobreanu/crawler_files/reverse_lookup
+  target: file:///home/mircea/crawler-files

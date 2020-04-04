@@ -9,13 +9,16 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
@@ -23,11 +26,8 @@ public class Application implements CommandLineRunner {
         SpringApplication.run(Application.class, args);
     }
 
-    @Value("${filesystem.documents.path}")
-    private String documentsFilesystemPath;
-
-    @Value("${filesystem.back.links.path}")
-    private String backLinksFilesystemPath;
+    @Value("${filesystem.target}")
+    private String targetFolder;
 
     @Value("${crawler.seeds}")
     private String[] defaultSeeds;
@@ -38,8 +38,6 @@ public class Application implements CommandLineRunner {
     @Value("${crawler.user.agent}")
     private String userAgent;
 
-    @Value("${filesystem.reverse.lookup.path}")
-    private String reverseLookupFilesystemPath;
 
     @Override
     public void run(String... args) throws Exception {
@@ -56,14 +54,32 @@ public class Application implements CommandLineRunner {
                 ))
                 .build();
 
+
+        Path target = Path.of(URI.create(targetFolder));
+        Path documentsFilesystemPath = target.resolve("documents");
+        Path connectivityGraphsFilesystemPath = target.resolve("connectivity");
+        Path backLinksFilesystemPath = target.resolve("back_links");
+        Path reverseLookupFilesystemPath = target.resolve("reverse_lookup");
+
+        Stream.of(target, documentsFilesystemPath, connectivityGraphsFilesystemPath, backLinksFilesystemPath, reverseLookupFilesystemPath)
+                .forEach(path -> {
+                    try {
+                        Files.createDirectories(path);
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Could not create required directories");
+                    }
+                });
+
+
         SequentialCrawler sequentialCrawler = SequentialCrawler.builder()
                 .httpClient(httpClient)
                 .crawlFrontier(new ConcurrentLinkedQueue<>(seedUrls))
                 .visited(new LinkedHashSet<>())
                 .pageLimit(defaultPageLimit)
-                .fileSystemDocumentsPath(Path.of(URI.create(documentsFilesystemPath)))
-                .fileSystemBackLinksPath(Path.of(URI.create(backLinksFilesystemPath)))
-                .fileSystemReverseLookupPath(Path.of(URI.create(reverseLookupFilesystemPath)))
+                .fileSystemConnectivityPath(connectivityGraphsFilesystemPath)
+                .fileSystemDocumentsPath(documentsFilesystemPath)
+                .fileSystemBackLinksPath(backLinksFilesystemPath)
+                .fileSystemReverseLookupPath(reverseLookupFilesystemPath)
                 .build();
 
         sequentialCrawler.start();

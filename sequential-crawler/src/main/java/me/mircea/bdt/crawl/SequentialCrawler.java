@@ -1,5 +1,6 @@
 package me.mircea.bdt.crawl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
@@ -54,6 +55,9 @@ public class SequentialCrawler {
     private final Path fileSystemReverseLookupPath;
 
     @NonNull
+    private final Path fileSystemConnectivityPath;
+
+    @NonNull
     private final UUID uuid = UUID.randomUUID();
 
     private final long pageLimit;
@@ -95,14 +99,22 @@ public class SequentialCrawler {
                 Thread.currentThread().interrupt();
             }
         }
+
+        Path jsonFile = fileSystemConnectivityPath.resolve("graph.json");
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            Files.createFile(jsonFile);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(jsonFile.toFile(), referrerMap);
+        } catch (IOException e) {
+            log.error("Could not write connectivity graph to disk");
+        }
     }
 
-    private Map.Entry<Document, Set<HttpUrl>> harvestResponse(HttpUrl url, Response response) throws IOException {
+    private Map.Entry<Document, Set<HttpUrl>> harvestResponse(HttpUrl url, @NonNull Response response) throws IOException {
         log.info("Parsing response from {}", url);
         visited.add(url); // todo: check existence of url hash on file system
 
         ResponseBody responseBody = response.body();
-
         Document htmlDocument = Jsoup.parse(responseBody.byteStream(), "UTF-8", url.toString());
 
         Set<HttpUrl> urls = htmlDocument.select("a[href]").stream()
