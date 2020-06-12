@@ -1,4 +1,4 @@
-package me.mircea.associations;
+package me.mircea.associations.mapper;
 
 import me.mircea.associations.writable.ItemSetWritable;
 import me.mircea.associations.writable.UuidWritable;

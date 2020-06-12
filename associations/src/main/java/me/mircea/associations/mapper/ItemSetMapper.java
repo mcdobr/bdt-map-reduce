@@ -1,4 +1,4 @@
-package me.mircea.associations;
+package me.mircea.associations.mapper;
 
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;

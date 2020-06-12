@@ -1,5 +1,7 @@
 package me.mircea.associations;
 
+import me.mircea.associations.mapper.FileToTransactionMapper;
+import me.mircea.associations.mapper.ItemSetMapper;
 import me.mircea.associations.writable.ItemSetWritable;
 import me.mircea.associations.writable.UuidWritable;
 import org.apache.hadoop.conf.Configuration;
