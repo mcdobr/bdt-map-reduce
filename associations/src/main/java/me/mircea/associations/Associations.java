@@ -16,29 +16,29 @@ public class Associations {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         // Extract transactions job
         Configuration extractTransactionsConfig = new Configuration();
-        Job extractTransactionsJob = Job.getInstance(extractTransactionsConfig, "Extract transactions");
-        extractTransactionsJob.setJarByClass(Associations.class);
-        extractTransactionsJob.setMapperClass(FileToTransactionMapper.class);
-        extractTransactionsJob.setOutputKeyClass(IntWritable.class);
-        extractTransactionsJob.setOutputValueClass(ItemSetWritable.class);
+        Job transactionJob = Job.getInstance(extractTransactionsConfig, "Extract transactions");
+        transactionJob.setJarByClass(Associations.class);
+        transactionJob.setMapperClass(FileToTransactionMapper.class);
+        transactionJob.setOutputKeyClass(IntWritable.class);
+        transactionJob.setOutputValueClass(ItemSetWritable.class);
         // We don't need any reducers for this map only job
-        extractTransactionsJob.setNumReduceTasks(0);
+        transactionJob.setNumReduceTasks(0);
 
-        FileInputFormat.addInputPath(extractTransactionsJob, new Path(args[0]));
-        FileOutputFormat.setOutputPath(extractTransactionsJob, new Path(EXTRACT_TRANSACTIONS_PATH));
-        extractTransactionsJob.waitForCompletion(true);
+        FileInputFormat.addInputPath(transactionJob, new Path(args[0]));
+        FileOutputFormat.setOutputPath(transactionJob, new Path(EXTRACT_TRANSACTIONS_PATH));
+        transactionJob.waitForCompletion(true);
 
         Configuration extractSubsetFrequencyConfig = new Configuration();
-        Job job = Job.getInstance(extractSubsetFrequencyConfig, "Extract relevant subset frequency");
-        job.setJarByClass(Associations.class);
-        job.setMapperClass(ItemSetMapper.class);
-//        job.setCombinerClass();
-//        job.setReducerClass();
-        job.setOutputKeyClass(ItemSetWritable.class);
-        job.setOutputValueClass(IntWritable.class);
+        Job subsetFrequencyJob = Job.getInstance(extractSubsetFrequencyConfig, "Extract relevant subset frequency");
+        subsetFrequencyJob.setJarByClass(Associations.class);
+        subsetFrequencyJob.setMapperClass(ItemSetMapper.class);
+//        subsetFrequencyJob.setCombinerClass();
+//        subsetFrequencyJob.setReducerClass();
+        subsetFrequencyJob.setOutputKeyClass(ItemSetWritable.class);
+        subsetFrequencyJob.setOutputValueClass(IntWritable.class);
 
-        FileInputFormat.addInputPath(extractTransactionsJob, new Path(EXTRACT_TRANSACTIONS_PATH));
-        FileOutputFormat.setOutputPath(extractTransactionsJob, new Path(args[1]));
-        extractTransactionsJob.waitForCompletion(true);
+        FileInputFormat.addInputPath(subsetFrequencyJob, new Path(EXTRACT_TRANSACTIONS_PATH));
+        FileOutputFormat.setOutputPath(subsetFrequencyJob, new Path(args[1]));
+        subsetFrequencyJob.waitForCompletion(true);
     }
 }
