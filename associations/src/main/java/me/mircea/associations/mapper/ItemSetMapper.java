@@ -5,7 +5,6 @@ import com.google.common.primitives.Ints;
 import me.mircea.associations.writable.ItemSetWritable;
 import me.mircea.associations.writable.UuidWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;

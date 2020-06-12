@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 public class FileToTransactionMapper extends Mapper<Object, Text, UuidWritable, ItemSetWritable> {
     @Override
     protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+        System.out.println(key);
         Map<UUID, int[]> transactionDictionary = Arrays.stream(value.toString().split("[\r\n]+"))
                 .collect(Collectors.toMap(line -> UUID.randomUUID(), this::splitLineIntoPrimitiveArray));
 
