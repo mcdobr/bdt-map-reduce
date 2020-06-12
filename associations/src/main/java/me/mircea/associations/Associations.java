@@ -26,20 +26,19 @@ public class Associations {
 
         FileInputFormat.addInputPath(extractTransactionsJob, new Path(args[0]));
         FileOutputFormat.setOutputPath(extractTransactionsJob, new Path(EXTRACT_TRANSACTIONS_PATH));
-        System.exit(extractTransactionsJob.waitForCompletion(true) ? 0 : 1);
+        extractTransactionsJob.waitForCompletion(true);
 
-        Configuration configuration = new Configuration();
-        Job job = Job.getInstance(configuration, "");
+        Configuration extractSubsetFrequencyConfig = new Configuration();
+        Job job = Job.getInstance(extractSubsetFrequencyConfig, "Extract relevant subset frequency");
         job.setJarByClass(Associations.class);
         job.setMapperClass(ItemSetMapper.class);
 //        job.setCombinerClass();
 //        job.setReducerClass();
-
-        job.setOutputKeyClass(ArrayPrimitiveWritable.class);
+        job.setOutputKeyClass(ItemSetWritable.class);
         job.setOutputValueClass(IntWritable.class);
 
         FileInputFormat.addInputPath(extractTransactionsJob, new Path(EXTRACT_TRANSACTIONS_PATH));
         FileOutputFormat.setOutputPath(extractTransactionsJob, new Path(args[1]));
-        System.exit(extractTransactionsJob.waitForCompletion(true) ? 0 : 1);
+        extractTransactionsJob.waitForCompletion(true);
     }
 }
