@@ -2,3 +2,4 @@
 mvn clean package
 docker cp target/associations-1.0-SNAPSHOT.jar namenode:associations-1.0-SNAPSHOT.jar
 docker cp run.sh namenode:custom-run.sh
+docker cp retail.dat.txt namenode:/input/retail.dat.txt
