@@ -7,17 +7,15 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class FileToLineMapper extends Mapper<Object, Text, IntWritable, ArrayPrimitiveWritable> {
+public class FileToTransactionMapper extends Mapper<Object, Text, IntWritable, ArrayPrimitiveWritable> {
     @Override
     protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
         AtomicInteger atomicInteger = new AtomicInteger(0);
-        Map<Integer, int[]> transactionDictionary = value.toString().lines()
+        Map<Integer, int[]> transactionDictionary = Arrays.stream(value.toString().split("[\r\n]+"))
                 .collect(Collectors.toMap(line -> atomicInteger.getAndIncrement(), this::splitLineIntoPrimitiveArray));
 
         for (Map.Entry<Integer, int[]> transactionEntry : transactionDictionary.entrySet()) {
