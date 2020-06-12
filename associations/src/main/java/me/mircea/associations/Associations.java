@@ -1,8 +1,9 @@
 package me.mircea.associations;
 
+import me.mircea.associations.writable.ItemSetWritable;
+import me.mircea.associations.writable.UuidWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -19,7 +20,8 @@ public class Associations {
         Job transactionJob = Job.getInstance(extractTransactionsConfig, "Extract transactions");
         transactionJob.setJarByClass(Associations.class);
         transactionJob.setMapperClass(FileToTransactionMapper.class);
-        transactionJob.setOutputKeyClass(IntWritable.class);
+
+        transactionJob.setOutputKeyClass(UuidWritable.class);
         transactionJob.setOutputValueClass(ItemSetWritable.class);
         // We don't need any reducers for this map only job
         transactionJob.setNumReduceTasks(0);
@@ -34,6 +36,7 @@ public class Associations {
         subsetFrequencyJob.setMapperClass(ItemSetMapper.class);
 //        subsetFrequencyJob.setCombinerClass();
 //        subsetFrequencyJob.setReducerClass();
+
         subsetFrequencyJob.setOutputKeyClass(ItemSetWritable.class);
         subsetFrequencyJob.setOutputValueClass(IntWritable.class);
 

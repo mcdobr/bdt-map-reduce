@@ -1,4 +1,4 @@
-package me.mircea.associations;
+package me.mircea.associations.writable;
 
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 
