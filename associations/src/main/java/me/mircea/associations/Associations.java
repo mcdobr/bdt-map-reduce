@@ -20,7 +20,7 @@ public class Associations {
         extractTransactionsJob.setJarByClass(Associations.class);
         extractTransactionsJob.setMapperClass(FileToTransactionMapper.class);
         extractTransactionsJob.setOutputKeyClass(IntWritable.class);
-        extractTransactionsJob.setOutputValueClass(ArrayPrimitiveWritable.class);
+        extractTransactionsJob.setOutputValueClass(ItemSetWritable.class);
         // We don't need any reducers for this map only job
         extractTransactionsJob.setNumReduceTasks(0);
 

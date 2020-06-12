@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 // Algorithm 1 in the lab paper
 // todo: might need to inverse the output because keys should implement WritableComparable which ArrayPrimitiveWritable
 //  does not
-public class ItemSetMapper extends Mapper<IntWritable, ArrayPrimitiveWritable, ArrayPrimitiveWritable, IntWritable> {
+public class ItemSetMapper extends Mapper<IntWritable, ItemSetWritable, ArrayPrimitiveWritable, IntWritable> {
     // todo: how do i inject these values in a "hadoop way" if example codes do not instantiate mappers
     //  via constructors? maybe setup?
 //    50675 39
@@ -30,7 +30,7 @@ public class ItemSetMapper extends Mapper<IntWritable, ArrayPrimitiveWritable, A
     private static final Set<Set<Integer>> POWER_SET = Sets.powerSet(MOST_COMMON_VALUES);
 
     @Override
-    protected void map(IntWritable key, ArrayPrimitiveWritable value, Context context) throws IOException, InterruptedException {
+    protected void map(IntWritable key, ItemSetWritable value, Context context) throws IOException, InterruptedException {
         int[] rawArray = (int[]) value.get();
 
         Set<Integer> items = Arrays.stream(rawArray).boxed()
@@ -41,7 +41,7 @@ public class ItemSetMapper extends Mapper<IntWritable, ArrayPrimitiveWritable, A
                 .collect(Collectors.toSet());
 
         for (Set<Integer> subset : relevantSubsetInTransaction) {
-            context.write(new ArrayPrimitiveWritable(Ints.toArray(subset)), new IntWritable(1));
+            context.write(new ItemSetWritable(Ints.toArray(subset)), new IntWritable(1));
         }
     }
 }
