@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// Algorithm 1 in the lab paper
 public class ItemSetMapper extends Mapper<LongWritable, ItemSetWritable, ItemSetWritable, IntWritable> {
     // todo: how do i inject these values in a "hadoop way" if example codes do not instantiate mappers
     //  via constructors? maybe setup?
