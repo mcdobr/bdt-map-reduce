@@ -27,7 +27,16 @@ public class ItemSetWritable extends ArrayPrimitiveWritable implements Comparabl
 
     @Override
     public boolean equals(Object obj) {
-        return this == obj || (obj != null && this.toString().equals(obj.toString()));
+        if (!(obj instanceof ItemSetWritable)) {
+            return false;
+        } else {
+            return this == obj || Arrays.equals(this.get(), ((ItemSetWritable) obj).get());
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(get());
     }
 
     @Override
